@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鳴尾浜勤務連絡フォーム</title>
+</head>
+<body>
+    <h1>鳴尾浜勤務連絡フォーム</h1>
+    <form id="chatForm">
+        <label for="employeeId">社員番号:</label>
+        <input type="text" id="employeeId" name="employeeId" required><br><br>
+
+        <label for="employeeName">氏名:</label>
+        <input type="text" id="employeeName" name="employeeName" required><br><br>
+
+        <label for="date">対象日付:</label>
+        <input type="date" id="date" name="date" required><br><br>
+
+        <label for="status">ステータス:</label>
+        <select id="status" name="status" required>
+            <option value="休み">休み</option>
+            <option value="遅刻">遅刻</option>
+        </select><br><br>
+
+        <label for="remarks">備考:</label><br>
+        <textarea id="remarks" name="remarks" rows="4" cols="50" placeholder="理由などを記載してください"></textarea><br><br>
+
+        <button type="submit" id="submitButton">送信</button> </form>
+
+    <script>
+        document.getElementById('chatForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const submitButton = document.getElementById('submitButton');
+            submitButton.disabled = true; // 送信ボタンを無効化
+            submitButton.textContent = '送信中...';
+
+            // 必須項目の値を取得
+            const employeeId = document.getElementById('employeeId').value.trim();
+            const employeeName = document.getElementById('employeeName').value.trim();
+            const date = document.getElementById('date').value.trim();
+            const status = document.getElementById('status').value;
+            const remarks = document.getElementById('remarks').value.trim();
+
+            // 必須項目の検証
+            if (!employeeId || !employeeName || !date) {
+                alert('必須項目が入力されていません。社員番号、氏名、対象日付を入力してください。');
+                submitButton.disabled = false;
+                submitButton.textContent = '送信';
+                return;
+            }
+
+            // ▼▼▼ ステップ2でコピーしたGASのウェブアプリURLに書き換えてください ▼▼▼
+            const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbxdHPNjDo_gGlJN7QGGiFVzl1NRKpQiWh-pD3IwLuRHbhGBU-_Idgh5z23KGhOIAn2kZQ/exec'; 
+
+            // GASのdoPost(e)に送信するデータオブジェクト
+            const formData = {
+                employeeId: employeeId,
+                employeeName: employeeName,
+                date: date,
+                status: status,
+                remarks: remarks
+            };
+
+            try {
+                const response = await fetch(gasWebAppUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8', // GASのdoPostで受けるためtext/plain推奨
+                    },
+                    body: JSON.stringify(formData),
+                    // mode: 'no-cors' は不要。GAS側でJSONを返せばOK
+                });
+                
+                const result = await response.json(); // GASからの応答をJSONとして解析
+
+                if (result.status === 'success') {
+                    alert('連絡内容が送信されました！ (スプレッドシートとGoogle Chat)');
+                    document.getElementById('chatForm').reset();
+                } else {
+                    throw new Error(result.message || '不明なエラーが発生しました。');
+                }
+
+            } catch (error) {
+                alert('エラーが発生しました: ' + error.message);
+            } finally {
+                submitButton.disabled = false; // ボタンを再度有効化
+                submitButton.textContent = '送信';
+            }
+        });
+    </script>
+</body>
+</html>
